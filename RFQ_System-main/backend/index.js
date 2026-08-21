@@ -1,0 +1,74 @@
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const healthRoutes = require("./routes/healthRoutes");
+const rfqRoutes = require("./routes/rfqRoutes");
+const { testConnection } = require("./config/db");
+const bidRoutes = require("./routes/bidRoutes");
+const authRoutes = require("./routes/authRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+
+const app = express();
+
+// Read allowed origins from env (comma-separated)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim().replace(/\r/g, ""))
+  : [];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      console.log("[CORS Debug] Request Origin:", origin);
+      console.log("[CORS Debug] Allowed Whitelist:", allowedOrigins);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
+app.use(express.json());
+const PORT = process.env.PORT || 5000;
+
+app.get("/health", (req, res) => {
+  res.send("Server running");
+});
+
+// Routes
+app.use("/api", authRoutes);
+app.use("/api", bidRoutes);
+app.use("/api", healthRoutes);
+app.use("/api", rfqRoutes);
+app.use("/api", categoryRoutes);
+app.use("/api", adminRoutes);
+app.use("/api", messageRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+    error: err.message,
+  });
+});
+
+const http = require("http");
+const socketManager = require("./config/socket");
+
+const server = http.createServer(app);
+socketManager.init(server, allowedOrigins);
+
+testConnection();
+
+// Start server
+server.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log("LazyList Backend Server Live on AWS EC2!");
+});
+
+module.exports = app;
