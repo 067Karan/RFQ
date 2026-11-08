@@ -27,7 +27,7 @@ export default function ChatSection({ rfqId, auctionStatus, posterId, rankings, 
     if (!showChat) return
     fetchMessages()
 
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const socketUrl = import.meta.env.VITE_API_URL || ''
     const socket = io(socketUrl, {
       withCredentials: true
     })

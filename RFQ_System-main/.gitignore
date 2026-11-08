@@ -40,3 +40,4 @@ HLD_v2.md
 walkthrough.md
 backend/check_db.js
 RFQ_interview/
+.env.save
